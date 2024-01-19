@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <form action="" id="loginForm">
+      <label for="nombre">Nombre y Apellido</label><br />
+      <input type="text" id="nombre" name="nombre" required /><br />
+      <label for="alias">Alias</label><br />
+      <input type="text" id="alias" name="alias" required /><br />
+      <label for="rut">RUT</label><br />
+      <input type="text" id="rut" name="rut" required /><br />
+      <label for="email">Email</label><br />
+      <input type="email" id="email" name="email" required /><br />
+      <label for="regiones">Región</label><br />
+      <select
+        name="regiones"
+        id="regiones"
+        class="regiones"
+        required
+        onchange="loadCom()"
+      >
+        <br />
+        <!--  opciones de region--></select
+      ><br />
+      <label for="comunas">Comuna</label><br />
+      <select name="comunas" id="comunas" class="comunas" required>
+        <br />
+        <!--  opciones de comuna-->
+        <option value="">Ingrese una región</option></select
+      ><br />
+      <label for="candidato">Candidato</label><br />
+      <select
+        name="candidato"
+        id="candidato"
+        class="candidato"
+        onclick="loadCan()"
+        required
+      >
+        <br />
+        <!--  opciones de candidato-->
+        <option value="">Elija un candidato</option>
+      </select>
+
+      <p>Cómo se entero de nosotros</p>
+
+      <input type="checkbox" id="web" name="conoce" value="web" />
+      <label for="web">Web</label>
+
+      <input type="checkbox" id="tv" name="conoce" value="tv" />
+      <label for="tv">TV</label>
+
+      <input type="checkbox" id="rrss" name="conoce" value="redes sociales" />
+      <label for="rrss">Redes sociales</label>
+
+      <input type="checkbox" id="amigo" name="conoce" value="amigo" />
+      <label for="amigo">Amigo</label><br />
+
+      <button type="submit">Votar</button><br />
+    </form>
+  </body>
+  <script>
+    let loginForm = document.getElementById("loginForm");
+
+    const regCon = document.querySelector(".regiones");
+    const comCon = document.querySelector(".comunas");
+    const canCon = document.querySelector(".candidato");
+
+    const cajas = document.getElementsByName("conoce");
+
+    const renderOptions = async () => {
+      let template = "";
+      await fetch("http://localhost:8888/", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((data) => data.json())
+        .then((response) => {
+          const regiones = response.map((region) => {
+            template += `
+          <option value="${region.id}">
+              ${region.nombre}
+          </option>
+      `;
+          });
+          regCon.innerHTML = template;
+        });
+    };
+
+    renderOptions();
+
+    async function loadCom() {
+      let template = "";
+      const reg = document.getElementById("regiones").value;
+      await fetch("http://localhost:8888/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          request: 0,
+          payload: reg,
+        }),
+      })
+        .then((data) => data.json())
+        .then((response) => {
+          const comunas = response.map((comuna) => {
+            template += `
+          <option value="${comuna.id}">
+              ${comuna.nombre}
+          </option>
+      `;
+          });
+          comCon.innerHTML = template;
+        });
+    }
+
+    async function loadCan() {
+      let template = "";
+      await fetch("http://localhost:8888/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          request: 1,
+          payload: "",
+        }),
+      })
+        .then((data) => data.json())
+        .then((response) => {
+          const candidatos = response.map((candidato) => {
+            template += `
+          <option value="${candidato.id}">
+              ${candidato.nombre}
+          </option>
+      `;
+          });
+          canCon.innerHTML = template;
+        });
+    }
+
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const formVal = (element) => {
+        return document.getElementById(element).value;
+      };
+
+      let checkedCount = 0;
+      for (const caja of cajas) {
+        if (caja.checked) {
+          checkedCount++;
+        }
+      }
+      if (checkedCount > 1) {
+        console.log(checkedCount);
+      } else {
+        alert("Debe seleccionar al menos 2 opciones");
+        return;
+      }
+
+      var Fn = {
+        // Valida el rut con su cadena completa "XXXXXXXX-X"
+        validaRut: function (rutCompleto) {
+          if (!/^[0-9]+[-|‐]{1}[0-9kK]{1}$/.test(rutCompleto)) return false;
+          var tmp = rutCompleto.split("-");
+          var digv = tmp[1];
+          var rut = tmp[0];
+          if (digv == "K") digv = "k";
+          return Fn.dv(rut) == digv;
+        },
+        dv: function (T) {
+          var M = 0,
+            S = 1;
+          for (; T; T = Math.floor(T / 10))
+            S = (S + (T % 10) * (9 - (M++ % 6))) % 11;
+          return S ? S - 1 : "k";
+        },
+      };
+
+      const voto = {
+        nombre: formVal("nombre"),
+        alias: formVal("alias"),
+
+/*         rut: formVal("rut"), */
+
+        rut: Fn.validaRut(formVal("rut")) ? formVal("rut") : alert('rut inválido'),
+
+        email: formVal("email"),
+        region: formVal("regiones"),
+        comuna: formVal("comunas"),
+        candidato: formVal("candidato"),
+
+        web: document.getElementById("web").checked ? 1 : 0,
+        tv: document.getElementById("tv").checked ? 1 : 0,
+        rrss: document.getElementById("rrss").checked ? 1 : 0,
+        amigo: document.getElementById("amigo").checked ? 1 : 0,
+      };
+
+      fetch("http://localhost:8888/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          request: 2,
+          payload: voto,
+        }),
+      })
+        .then((data) => data.json())
+        .then((response) => {
+          alert(response);
+        });
+    });
+  </script>
+</html>

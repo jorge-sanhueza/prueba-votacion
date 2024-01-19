@@ -1,0 +1,12 @@
+Proyecto utiliza PHP 8.3.1 y la base de datos es en base a PostgreSQL.
+Primero se debe iniciar un servidor local con la herramienta incluida de PHP. Desde la raiz del proyecto ejecutar el comando:
+
+    php -S localhost:8888
+
+En este caso el servidor (index.php) escucha en el puerto 8888 y el string de conexión contiene los siguientes parámetros:
+
+    pg_connect("host=localhost user=postgres dbname=pruebauno");
+
+La base de datos adjunta se llama "pruebauno" y no tiene datos de contraseña para acceder.
+
+Una vez cargado los datos de la base de datos y el servidor escuchando se puede acceder mediante un navegador al archivo "index.html" para realizar la votación.
